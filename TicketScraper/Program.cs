@@ -1,18 +1,21 @@
 using Microsoft.Playwright;
+using System.Text;
 using System.Text.RegularExpressions;
 
 const string SiteUrl = "https://ticket.hc-avto.ru/ru/";
 
-var email = Environment.GetEnvironmentVariable("TICKET_EMAIL");
-var password = Environment.GetEnvironmentVariable("TICKET_PASSWORD");
 var maxTickets = GetMaxTickets(args);
 var headed = args.Contains("--headed", StringComparer.OrdinalIgnoreCase);
+var email = GetSetting("TICKET_EMAIL", "Email: ");
+var password = GetSetting("TICKET_PASSWORD", "Password: ", isSecret: true);
 
 if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
 {
-    Console.Error.WriteLine("Set TICKET_EMAIL and TICKET_PASSWORD environment variables before running the script.");
+    Console.Error.WriteLine("Email and password are required to run TicketScraper.");
     return 2;
 }
+
+await EnsureChromiumInstalledAsync();
 
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -47,6 +50,64 @@ for (var i = 0; i < tickets.Count; i++)
 }
 
 return 0;
+
+static string? GetSetting(string environmentVariable, string prompt, bool isSecret = false)
+{
+    var value = Environment.GetEnvironmentVariable(environmentVariable);
+    if (!string.IsNullOrWhiteSpace(value) || !Environment.UserInteractive)
+    {
+        return value;
+    }
+
+    Console.Write(prompt);
+    return isSecret ? ReadSecret() : Console.ReadLine();
+}
+
+static string ReadSecret()
+{
+    var result = new StringBuilder();
+
+    while (true)
+    {
+        var key = Console.ReadKey(intercept: true);
+        if (key.Key == ConsoleKey.Enter)
+        {
+            Console.WriteLine();
+            return result.ToString();
+        }
+
+        if (key.Key == ConsoleKey.Backspace)
+        {
+            if (result.Length > 0)
+            {
+                result.Length--;
+                Console.Write("\b \b");
+            }
+
+            continue;
+        }
+
+        if (!char.IsControl(key.KeyChar))
+        {
+            result.Append(key.KeyChar);
+            Console.Write('*');
+        }
+    }
+}
+
+static async Task EnsureChromiumInstalledAsync()
+{
+    var browserPath = Path.Combine(AppContext.BaseDirectory, "ms-playwright");
+    Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", browserPath);
+
+    var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+    if (exitCode != 0)
+    {
+        throw new InvalidOperationException($"Не удалось установить Chromium для Playwright. Код выхода: {exitCode}.");
+    }
+
+    await Task.CompletedTask;
+}
 
 static int GetMaxTickets(string[] args)
 {

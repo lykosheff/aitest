@@ -1,23 +1,43 @@
 # TicketScraper
 
-C# console script for logging in to `https://ticket.hc-avto.ru/ru/`, opening the personal tickets/orders area, and printing the most recent purchased tickets.
+C# console utility for logging in to `https://ticket.hc-avto.ru/ru/`, opening the personal tickets/orders area, and printing the most recent purchased tickets.
 
-Credentials are intentionally read from environment variables so the email and password are not committed to source control.
+The utility is configured so the release build produces a single Windows executable. After publishing, a user only needs to start `TicketScraper.exe`; on the first run it installs the Chromium browser used by Playwright into the `ms-playwright` folder next to the executable.
+
+Credentials can still be provided through environment variables, but they are no longer required before launch. If `TICKET_EMAIL` or `TICKET_PASSWORD` is missing, the executable asks for them in the console.
+
+## Build the exe
+
+```bash
+dotnet restore TicketScraper/TicketScraper.csproj
+dotnet publish TicketScraper/TicketScraper.csproj -c Release
+```
+
+The executable will be created at:
+
+```text
+TicketScraper/bin/Release/net8.0/win-x64/publish/TicketScraper.exe
+```
 
 ## Run
 
-```bash
-export TICKET_EMAIL='your-email@example.com'
-export TICKET_PASSWORD='your-password'
-dotnet restore TicketScraper/TicketScraper.csproj
-dotnet build TicketScraper/TicketScraper.csproj
-# After the first build, install the browser binaries used by Playwright:
-pwsh TicketScraper/bin/Debug/net8.0/playwright.ps1 install chromium
-dotnet run --project TicketScraper/TicketScraper.csproj -- --count 5
+Start the published executable:
+
+```powershell
+.\TicketScraper.exe
 ```
 
-Use `--headed` to see the browser while debugging selectors:
+Optional arguments are still available:
 
-```bash
-dotnet run --project TicketScraper/TicketScraper.csproj -- --count 5 --headed
+```powershell
+.\TicketScraper.exe --count 5
+.\TicketScraper.exe --count 5 --headed
+```
+
+You can skip interactive credential prompts by setting environment variables before launch:
+
+```powershell
+$env:TICKET_EMAIL = 'your-email@example.com'
+$env:TICKET_PASSWORD = 'your-password'
+.\TicketScraper.exe --count 5
 ```
