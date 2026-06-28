@@ -1,0 +1,5 @@
+bin/
+obj/
+.playwright/
+*.user
+.env
