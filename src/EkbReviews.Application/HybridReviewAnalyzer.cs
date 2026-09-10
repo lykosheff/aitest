@@ -15,7 +15,7 @@ public sealed class HybridReviewAnalyzer(
             return null;
 
         var analysis = await ai.AnalyzeAsync(review, cancellationToken);
-        if (!analysis.Interesting || analysis.Score < 50)
+        if (analysis is null)
             return null;
 
         var score = Math.Clamp((heuristicCandidate.Score + analysis.Score) / 2, 0, 100);
@@ -28,10 +28,10 @@ public sealed class HybridReviewAnalyzer(
             Score = score,
             Title = string.IsNullOrWhiteSpace(analysis.Title) ? heuristicCandidate.Title : analysis.Title,
             Reason = reason,
-            HasDialogue = heuristicCandidate.HasDialogue || analysis.StrongDialogue,
-            HasConflict = heuristicCandidate.HasConflict || analysis.Conflict,
-            HasHumor = heuristicCandidate.HasHumor || analysis.Humor,
-            HasSurprise = heuristicCandidate.HasSurprise || analysis.Surprise
+            HasDialogue = heuristicCandidate.HasDialogue || analysis.HasDialogue,
+            HasConflict = heuristicCandidate.HasConflict || analysis.HasConflict,
+            HasHumor = heuristicCandidate.HasHumor || analysis.HasHumor,
+            HasSurprise = heuristicCandidate.HasSurprise || analysis.HasSurprise
         };
     }
 }
