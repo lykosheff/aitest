@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\Directory.Build.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\EkbReviews.Domain\EkbReviews.Domain.csproj" />
+  </ItemGroup>
+</Project>
