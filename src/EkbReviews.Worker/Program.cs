@@ -28,7 +28,15 @@ builder.Services.AddSingleton(sp =>
 
 builder.Services.AddHostedService<CatalogWorker>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+
+await using (var scope = host.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EkbReviewsDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
+await host.RunAsync();
 
 internal sealed class CatalogWorker(
     ILogger<CatalogWorker> logger,
