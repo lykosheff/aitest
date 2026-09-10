@@ -1,0 +1,26 @@
+name: EkbReviews build
+
+on:
+  push:
+    paths:
+      - 'EkbReviews.sln'
+      - 'Directory.Build.props'
+      - 'src/EkbReviews.*/**'
+      - '.github/workflows/ekb-reviews-build.yml'
+  pull_request:
+    paths:
+      - 'EkbReviews.sln'
+      - 'Directory.Build.props'
+      - 'src/EkbReviews.*/**'
+      - '.github/workflows/ekb-reviews-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet restore EkbReviews.sln
+      - run: dotnet build EkbReviews.sln --configuration Release --no-restore
