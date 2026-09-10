@@ -7,7 +7,7 @@ namespace EkbReviews.Infrastructure;
 
 public sealed class OllamaReviewAnalyzer(
     HttpClient httpClient,
-    AiOptions options) : IReviewAnalyzer
+    AiOptions options) : IAiReviewAnalyzer
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
