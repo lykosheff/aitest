@@ -9,8 +9,9 @@ using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddSingleton<IReviewAnalyzer, HeuristicReviewAnalyzer>();
+builder.Services.AddSingleton<HeuristicReviewAnalyzer>();
 builder.Services.AddEkbReviewsInfrastructure(builder.Configuration);
+builder.Services.AddSingleton<IReviewAnalyzer, HybridReviewAnalyzer>();
 builder.Services.AddScoped<IReviewRepository, PostgresReviewRepository>();
 
 builder.Services.AddDbContext<EkbReviewsDbContext>(options =>
