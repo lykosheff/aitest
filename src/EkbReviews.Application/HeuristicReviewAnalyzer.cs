@@ -5,54 +5,84 @@ namespace EkbReviews.Application;
 
 public sealed class HeuristicReviewAnalyzer : IReviewAnalyzer
 {
-    private static readonly string[] ConflictWords = ["ужас", "кошмар", "хам", "обман", "верните", "жалоб", "скандал"];
-    private static readonly string[] HumorWords = ["смешно", "😂", "🤣", "шут", "прикол"];
+    private static readonly string[] ConflictWords = ["ужас", "кошмар", "хам", "обман", "верните", "жалоб", "скандал", "разочарован"];
+    private static readonly string[] HumorWords = ["смешно", "😂", "🤣", "шут", "прикол", "ирони", "мем"];
+    private static readonly string[] SurpriseWords = ["не ожидал", "не ожидала", "впервые", "никогда", "оказалось", "в итоге", "вдруг"];
 
     public Task<ReviewCandidate?> AnalyzeAsync(Review review, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(review.Text) || review.Text.Trim().Length < 40)
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var text = Normalize(review.Text);
+        if (text.Length < 40)
             return Task.FromResult<ReviewCandidate?>(null);
 
-        var text = review.Text.Trim();
-        var hasDialogue = review.Replies.Count > 0;
-        var hasConflict = ContainsAny(text, ConflictWords) || review.Replies.Any(r => ContainsAny(r.Text, ConflictWords));
-        var hasHumor = ContainsAny(text, HumorWords) || review.Replies.Any(r => ContainsAny(r.Text, HumorWords));
-        var hasSurprise = text.Contains('!') && text.Contains('?');
+        var conversation = new ReviewConversationExtractor().Extract(review);
+        var allText = string.Join(" ", conversation.Messages.Select(x => x.Text));
+        var hasDialogue = conversation.IsDialogue;
+        var hasConflict = ContainsAny(allText, ConflictWords);
+        var hasHumor = ContainsAny(allText, HumorWords);
+        var hasSurprise = text.Contains('!') && text.Contains('?') || ContainsAny(text, SurpriseWords);
+        var specificity = CalculateSpecificity(text);
+        var freshness = CalculateFreshness(review.PublishedAt);
 
-        var score = 15;
-        score += Math.Min(25, text.Length / 80);
-        score += hasDialogue ? 25 : 0;
+        var score = 10;
+        score += Math.Min(15, text.Length / 100);
+        score += hasDialogue ? Math.Min(25, 10 + review.Replies.Count * 5) : 0;
         score += hasConflict ? 15 : 0;
-        score += hasHumor ? 10 : 0;
+        score += hasHumor ? 15 : 0;
         score += hasSurprise ? 10 : 0;
+        score += specificity;
+        score += freshness;
         score += review.Rating is 1 or 5 ? 5 : 0;
         score = Math.Min(100, score);
 
         if (score < 45)
             return Task.FromResult<ReviewCandidate?>(null);
 
-        var reason = string.Join(", ", new[]
-        {
-            hasDialogue ? "есть ответ заведения" : null,
-            hasConflict ? "конфликт" : null,
-            hasHumor ? "юмор" : null,
-            hasSurprise ? "неожиданная формулировка" : null
-        }.Where(x => x is not null));
+        var reasons = new List<string>();
+        if (hasDialogue) reasons.Add("диалог с заведением");
+        if (hasConflict) reasons.Add("конфликт");
+        if (hasHumor) reasons.Add("юмор");
+        if (hasSurprise) reasons.Add("неожиданный поворот");
+        if (specificity >= 8) reasons.Add("много конкретики");
+        if (freshness >= 8) reasons.Add("свежий отзыв");
 
-        var title = Regex.Replace(text, @"\s+", " ").Trim();
-        if (title.Length > 90)
-            title = title[..90] + "…";
-
+        var title = CreateTitle(text);
         return Task.FromResult<ReviewCandidate?>(new ReviewCandidate(
             review,
             score,
             title,
-            string.IsNullOrEmpty(reason) ? "необычный отзыв" : reason,
+            reasons.Count == 0 ? "необычный отзыв" : string.Join(", ", reasons),
             hasDialogue,
             hasConflict,
             hasHumor,
             hasSurprise));
     }
+
+    private static int CalculateSpecificity(string text)
+    {
+        var signals = new[] { "час", "минут", "руб", "заказ", "официант", "администратор", "блюд", "счёт", "чек", "доставка" };
+        return Math.Min(10, signals.Count(x => text.Contains(x, StringComparison.OrdinalIgnoreCase)) * 2);
+    }
+
+    private static int CalculateFreshness(DateTimeOffset publishedAt)
+    {
+        var age = DateTimeOffset.UtcNow - publishedAt;
+        if (age <= TimeSpan.FromHours(24)) return 10;
+        if (age <= TimeSpan.FromDays(3)) return 8;
+        if (age <= TimeSpan.FromDays(7)) return 5;
+        if (age <= TimeSpan.FromDays(14)) return 2;
+        return 0;
+    }
+
+    private static string CreateTitle(string text)
+    {
+        var title = Regex.Replace(text, @"\s+", " ").Trim();
+        return title.Length <= 90 ? title : title[..90] + "…";
+    }
+
+    private static string Normalize(string text) => Regex.Replace(text ?? string.Empty, @"\s+", " ").Trim();
 
     private static bool ContainsAny(string text, IEnumerable<string> words) =>
         words.Any(word => text.Contains(word, StringComparison.OrdinalIgnoreCase));
