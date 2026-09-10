@@ -22,7 +22,7 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(aiOptions.TimeoutSeconds);
         });
 
-        services.AddSingleton<IReviewAnalyzer>(sp =>
+        services.AddSingleton<IAiReviewAnalyzer>(sp =>
         {
             if (!string.Equals(aiOptions.Provider, "Ollama", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"Unsupported AI provider: {aiOptions.Provider}");
