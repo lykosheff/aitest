@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\Directory.Build.props" />
   <ItemGroup>
     <ProjectReference Include="..\EkbReviews.Application\EkbReviews.Application.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
