@@ -14,6 +14,7 @@ public sealed class OllamaReviewAnalyzer(
     private static readonly object ResponseSchema = new
     {
         type = "object",
+        additionalProperties = false,
         properties = new
         {
             interesting = new { type = "boolean" },

@@ -52,7 +52,17 @@ public sealed class OllamaReviewAnalyzerTests
         {
             Assert.That(root.GetProperty("model").GetString(), Is.EqualTo("gpt-oss"));
             Assert.That(root.GetProperty("stream").GetBoolean(), Is.False);
-            Assert.That(root.GetProperty("format").ValueKind, Is.EqualTo(JsonValueKind.Object));
+            var format = root.GetProperty("format");
+            Assert.That(format.ValueKind, Is.EqualTo(JsonValueKind.Object));
+            Assert.That(format.GetProperty("type").GetString(), Is.EqualTo("object"));
+            Assert.That(format.GetProperty("additionalProperties").GetBoolean(), Is.False);
+            Assert.That(
+                format.GetProperty("required").EnumerateArray().Select(x => x.GetString()),
+                Is.EquivalentTo(new[]
+                {
+                    "interesting", "score", "conflict", "humor", "surprise",
+                    "strongDialogue", "storyType", "title", "reason"
+                }));
             Assert.That(root.GetProperty("options").GetProperty("temperature").GetDouble(), Is.EqualTo(0));
         });
 

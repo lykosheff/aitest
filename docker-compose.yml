@@ -9,6 +9,52 @@ services:
       - "5432:5432"
     volumes:
       - ekb-reviews-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ekb_reviews"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  gpt-oss:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gpt-oss:20b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: "ollama pull $${OLLAMA_MODEL}"
+    restart: "no"
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/EkbReviews.Worker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gpt-oss:
+        condition: service_completed_successfully
+    environment:
+      ConnectionStrings__EkbReviews: Host=postgres;Port=5432;Database=ekb_reviews;Username=postgres;Password=postgres
+      Ai__BaseUrl: http://ollama:11434
+      Ai__Model: ${OLLAMA_MODEL:-gpt-oss:20b}
+      TwoGis__ApiKey: ${TWOGIS_API_KEY:-}
+    restart: unless-stopped
 
 volumes:
   ekb-reviews-postgres:
+  ollama-models:
