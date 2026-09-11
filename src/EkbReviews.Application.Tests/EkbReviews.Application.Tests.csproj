@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\Directory.Build.props" />
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\EkbReviews.Application\EkbReviews.Application.csproj" />
+    <ProjectReference Include="..\EkbReviews.Infrastructure\EkbReviews.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="NUnit" Version="4.3.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
