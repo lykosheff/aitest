@@ -29,7 +29,9 @@ public sealed class OllamaReviewAnalyzer(
         required = new[] { "interesting", "score", "conflict", "humor", "surprise", "strongDialogue", "storyType", "title", "reason" }
     };
 
-    public async Task<ReviewCandidate?> AnalyzeAsync(Review review, CancellationToken cancellationToken = default)
+    public async Task<AiReviewAnalysis> AnalyzeAsync(
+        Review review,
+        CancellationToken cancellationToken = default)
     {
         var conversation = new ReviewConversationExtractor().Extract(review);
         var conversationText = string.Join("\n\n", conversation.Messages.Select(FormatMessage));
@@ -61,21 +63,10 @@ public sealed class OllamaReviewAnalyzer(
         var payload = await response.Content.ReadFromJsonAsync<OllamaResponse>(JsonOptions, cancellationToken)
             ?? throw new InvalidOperationException("Ollama returned an empty response.");
 
-        var result = JsonSerializer.Deserialize<AiReviewResult>(payload.Message.Content, JsonOptions)
+        var result = JsonSerializer.Deserialize<AiReviewAnalysis>(payload.Message.Content, JsonOptions)
             ?? throw new InvalidOperationException("Ollama returned invalid structured output.");
 
-        if (!result.Interesting || result.Score < 45)
-            return null;
-
-        return new ReviewCandidate(
-            review,
-            Math.Clamp(result.Score, 0, 100),
-            string.IsNullOrWhiteSpace(result.Title) ? null : result.Title.Trim(),
-            result.Reason.Trim(),
-            result.StrongDialogue,
-            result.Conflict,
-            result.Humor,
-            result.Surprise);
+        return result with { Score = Math.Clamp(result.Score, 0, 100) };
     }
 
     private static string FormatMessage(ConversationMessage message) =>
@@ -83,15 +74,4 @@ public sealed class OllamaReviewAnalyzer(
 
     private sealed record OllamaResponse(OllamaMessage Message);
     private sealed record OllamaMessage(string Content);
-
-    private sealed record AiReviewResult(
-        bool Interesting,
-        int Score,
-        bool Conflict,
-        bool Humor,
-        bool Surprise,
-        bool StrongDialogue,
-        string StoryType,
-        string Title,
-        string Reason);
 }
