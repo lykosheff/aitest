@@ -6,12 +6,14 @@ on:
       - 'EkbReviews.sln'
       - 'Directory.Build.props'
       - 'src/EkbReviews.*/**'
+      - 'docker-compose.yml'
       - '.github/workflows/ekb-reviews-build.yml'
   pull_request:
     paths:
       - 'EkbReviews.sln'
       - 'Directory.Build.props'
       - 'src/EkbReviews.*/**'
+      - 'docker-compose.yml'
       - '.github/workflows/ekb-reviews-build.yml'
 
 jobs:
@@ -24,3 +26,6 @@ jobs:
           dotnet-version: 9.0.x
       - run: dotnet restore EkbReviews.sln
       - run: dotnet build EkbReviews.sln --configuration Release --no-restore
+      - run: dotnet test EkbReviews.sln --configuration Release --no-build --verbosity normal
+      - run: docker compose config
+      - run: docker build -f src/EkbReviews.Worker/Dockerfile .
