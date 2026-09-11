@@ -15,23 +15,17 @@ public sealed class HybridReviewAnalyzer(
             return null;
 
         var analysis = await ai.AnalyzeAsync(review, cancellationToken);
-        if (analysis is null)
+        if (!analysis.Interesting || analysis.Score < 45)
             return null;
 
-        var score = Math.Clamp((heuristicCandidate.Score + analysis.Score) / 2, 0, 100);
-        var reason = string.IsNullOrWhiteSpace(analysis.Reason)
-            ? heuristicCandidate.Reason
-            : analysis.Reason;
-
-        return heuristicCandidate with
-        {
-            Score = score,
-            Title = string.IsNullOrWhiteSpace(analysis.Title) ? heuristicCandidate.Title : analysis.Title,
-            Reason = reason,
-            HasDialogue = heuristicCandidate.HasDialogue || analysis.HasDialogue,
-            HasConflict = heuristicCandidate.HasConflict || analysis.HasConflict,
-            HasHumor = heuristicCandidate.HasHumor || analysis.HasHumor,
-            HasSurprise = heuristicCandidate.HasSurprise || analysis.HasSurprise
-        };
+        return new ReviewCandidate(
+            review,
+            Math.Clamp(analysis.Score, 0, 100),
+            string.IsNullOrWhiteSpace(analysis.Title) ? heuristicCandidate.Title : analysis.Title.Trim(),
+            string.IsNullOrWhiteSpace(analysis.Reason) ? heuristicCandidate.Reason : analysis.Reason.Trim(),
+            analysis.StrongDialogue,
+            analysis.Conflict,
+            analysis.Humor,
+            analysis.Surprise);
     }
 }
