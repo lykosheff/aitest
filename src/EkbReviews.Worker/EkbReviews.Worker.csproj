@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
-  <Import Project="..\..\Directory.Build.props" />
   <ItemGroup>
     <ProjectReference Include="..\EkbReviews.Application\EkbReviews.Application.csproj" />
     <ProjectReference Include="..\EkbReviews.Infrastructure\EkbReviews.Infrastructure.csproj" />
