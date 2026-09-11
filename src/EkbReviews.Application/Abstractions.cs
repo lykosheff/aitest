@@ -23,13 +23,6 @@ public interface IReviewAnalyzer
         CancellationToken cancellationToken = default);
 }
 
-public interface IAiReviewAnalyzer
-{
-    Task<ReviewCandidate?> AnalyzeAsync(
-        Review review,
-        CancellationToken cancellationToken = default);
-}
-
 public interface IReviewPublisher
 {
     Task PublishAsync(
