@@ -25,7 +25,8 @@ jobs:
         with:
           dotnet-version: 9.0.x
       - run: dotnet restore EkbReviews.sln
-      - run: dotnet build EkbReviews.sln --configuration Release --no-restore
-      - run: dotnet test EkbReviews.sln --configuration Release --no-build --verbosity normal
+      - run: dotnet build src/EkbReviews.Worker/EkbReviews.Worker.csproj --configuration Release --no-restore
+      - run: dotnet build src/EkbReviews.Application.Tests/EkbReviews.Application.Tests.csproj --configuration Release --no-restore
+      - run: dotnet test src/EkbReviews.Application.Tests/EkbReviews.Application.Tests.csproj --configuration Release --no-build --verbosity normal
       - run: docker compose config
       - run: docker build -f src/EkbReviews.Worker/Dockerfile .
