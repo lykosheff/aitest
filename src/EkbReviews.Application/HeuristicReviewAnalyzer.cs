@@ -26,11 +26,14 @@ public sealed class HeuristicReviewAnalyzer : IReviewAnalyzer
         var specificity = CalculateSpecificity(text);
         var freshness = CalculateFreshness(review.PublishedAt);
 
-        var score = 10;
-        score += Math.Min(15, text.Length / 100);
-        score += hasDialogue ? Math.Min(25, 10 + review.Replies.Count * 5) : 0;
-        score += hasConflict ? 15 : 0;
-        score += hasHumor ? 15 : 0;
+        // Dialogue, conflict and humor are the strongest signals for this channel.
+        // Freshness is deliberately a smaller bonus: an old but genuinely interesting
+        // story should still beat a fresh generic review.
+        var score = 5;
+        score += Math.Min(10, text.Length / 100);
+        score += hasDialogue ? Math.Min(30, 15 + review.Replies.Count * 7) : 0;
+        score += hasConflict ? 25 : 0;
+        score += hasHumor ? 20 : 0;
         score += hasSurprise ? 10 : 0;
         score += specificity;
         score += freshness;
