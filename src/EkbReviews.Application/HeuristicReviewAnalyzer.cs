@@ -31,7 +31,7 @@ public sealed class HeuristicReviewAnalyzer : IReviewAnalyzer
         // story should still beat a fresh generic review.
         var score = 5;
         score += Math.Min(10, text.Length / 100);
-        score += hasDialogue ? Math.Min(32, 18 + review.Replies.Count * 7) : 0;
+        score += hasDialogue ? 32 : 0;
         score += hasConflict ? 27 : 0;
         score += hasHumor ? 25 : 0;
         score += hasSurprise ? 10 : 0;
