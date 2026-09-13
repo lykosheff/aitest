@@ -30,6 +30,27 @@ public static class DependencyInjection
             return sp.GetRequiredService<OllamaReviewAnalyzer>();
         });
 
+        // Регистрация клиентов для 2GIS
+        services.AddHttpClient<TwoGisCatalogClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://catalog.api.2gis.com/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        services.AddHttpClient<TwoGisReviewClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://catalog.api.2gis.com/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        // Регистрация клиента для Яндекс Карт
+        services.AddHttpClient<YandexMapsReviewClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://yandex.ru/sprav/api/v1/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "EkbReviewsBot/1.0");
+        });
+
         return services;
     }
 }
